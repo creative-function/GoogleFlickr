@@ -10,7 +10,9 @@ console.log("hello, chello. GoogleFlickr1.0"); //0. define global function varia
 var picSearch_button = document.querySelector("[name='picSearch_button']");
 var picSearch_query = document.querySelector("[name='SearchInputField']");
 var tagsSearch_button = document.querySelector("[name='tagsSearch_button']");
-var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
+var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']"); //create blank array to store photo info in.
+
+var photoDeck = [];
 ;
 
 (function () {
@@ -18,22 +20,22 @@ var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
   console.log('flicker function booted...'); //** the url containg info FLICKR needs to return requested data. User text is fed thru using template literals: ${var}. url stored in a var. */
 
   var SRCH_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=47fa016833c10c7cf777062f48eb2908&tags=${tagsQuery}&text=${photoQuery}&has_geo=1&extras=geo&format=json&nojsoncallback=1';
-  var INFO_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoIDs}&format=json&nojsoncallback=1'; //create blank array to store photo ids in. IDS used to pull lat/lon info
+  var INFO_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1'; //6. repeat the process, sending photoIDs to flickr
 
-  var photoIDs = [];
-  var photoDeck = []; //6. repeat the process, sending photoIDs to flickr
+  function getPhotoInfo(photoID) {
+    console.log("fetching photo info..."); //clear array for incoming data
 
-  function getPhotoInfo(photoIDs) {
-    console.log("fetching photo info...");
+    photoDeck = [];
     axios.get(INFO_API_URL_BASE, {
       //call the link
       params: {
-        photo_id: photoIDs // pass thru your varibales to Flickr's parameters
+        photo_id: photoID // pass thru your varibales to Flickr's parameters
 
       }
     }).then(function (infoResponse) {
       //then call this function
-      console.log(infoResponse); // createPhotoMarker(infoResponse); //pass the data to the next function;
+      //add responses to new array
+      photoDeck.push(infoResponse); // createPhotoMarker(infoResponse); //pass the data to the next function;
     }).catch(function (error) {
       //if get function failed, call this function 
       console.log("infoResponse isn't working...");
@@ -47,18 +49,15 @@ var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
     console.log("processing data..."); //target the array from the data you want to loop through
 
     var photoReturn = response.data.photos.photo; //clear photoIDs array of any previously stored ids
-
-    photoIDs = []; //loop through the array of data
+    //photoIDs = [];
+    //loop through the array of data
 
     for (var i = 0; i < photoReturn.length; i++) {
       //store specific data in variables
-      var photoID = photoReturn[i].id; //add id to new array
+      var photoID = photoReturn[i].id; //call next function, passing through new array
 
-      photoIDs.push(photoID);
-    } //call next function, passing through new array
-
-
-    getPhotoInfo(photoIDs);
+      getPhotoInfo(photoID);
+    }
   }
 
   ; //4. call FLICKRs.photo.search and pass user values along as Flickrs params
