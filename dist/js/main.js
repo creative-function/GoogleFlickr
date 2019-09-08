@@ -22,47 +22,56 @@ var photoIDs = [];
   console.log('flicker function booted...'); //** the url containg info FLICKR needs to return requested data. User text is fed thru using template literals: ${var}. url stored in a var. */
 
   var SRCH_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=47fa016833c10c7cf777062f48eb2908&tags=${tagsQuery}&text=${photoQuery}&max_upload_date=1567857600&has_geo=1&extras=geo&format=json&nojsoncallback=1';
-  var INFO_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1'; //7. create markers to pass through to google's api
+  var INFO_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1';
+  var IMGurl_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1'; //7. create markers to pass through to google's api
 
-  function createPhotoMarker(infoResponse) {
+  function createPhotoBox(infoResponse) {
     console.log("loading marker info..."); //store object properties in values
 
-    var photoDesc = infoResponse.data.photo.description._content; //target arrays that need to be looped thru 
+    var photoDeck = infoResponse.data.photo.title._content; //create div
 
-    var photoURLs = infoResponse.data.photo.urls.url; //loop through arrays, 
+    var resultPane = document.createElement('div');
+    resultPane.className = "flickr_result";
+    var resultImg = document.createElement('div');
+    resultImg.className = "flickr_img"; //create container for text
 
-    photoURLs.forEach(function (rawURL) {
-      //for each array, go into the array properties
-      var img_URL = rawURL._content; //and store in variable 
-      // console.log ("url info...")
-      // console.log(img_URL);
-      //create div
+    var photoContent = document.createElement('p');
+    photoContent.className = "flickr_content"; //place content in container
 
-      var photoDiv = document.createElement('div');
-      photoDiv.className = "flickr_result"; //create image
+    photoContent.innerText = photoDeck; //add containers to div
+    // resultPane.appendChild(photo);
 
-      var photo = new Image(200, 200);
-      photo.className = "flickr_photo"; //create container
+    resultPane.appendChild(resultImg);
+    resultPane.appendChild(photoContent); //add div to page
 
-      var photoContent = document.createElement('p');
-      photoContent.className = "flickr_content"; //place content
-
-      photo.src = img_URL;
-      photo.decode();
-      photoContent.innerText = photoDesc; //add container to div
-
-      photoDiv.appendChild(photo);
-      photoDiv.appendChild(photoContent); //add div to page
-
-      resultsWindow.appendChild(photoDiv);
-    }); //pass values to goole api for points
+    resultsWindow.appendChild(resultPane); //pass values to goole api for points
     //pass values to display funciton 
     //console.log(photoDeck);
+  }
+
+  function pullURLS(infoImage) {
+    var photoSizes = infoImage.data.sizes;
+    console.log(photoSizes);
+    var img_lgSq = photoSizes.size.find(function (_ref) {
+      var label = _ref.label;
+      return label === 'Large Square';
+    });
+    var imgSrc = img_lgSq.source;
+    console.log(imgSrc); // // create img
+    // let photo = new Image (150, 150);
+    // photo.src = imgSrc;
+
+    var imgWindow = document.createElement("img");
+    imgWindow.setAttribute("src", imgSrc);
+    imgWindow.className = "flickr_img"; //let card = document.querySelector("flickr_img");
+
+    resultsWindow.appendChild(imgWindow);
   }
 
   ; //6. repeat the process, sending photoIDs to flickr
 
   function getPhotoInfo(photoID) {
+    //CALL 1 GETS USER INFO ON PHOTOS IN NEATER OBJECTS
     console.log("fetching photo info...");
     axios.get(INFO_API_URL_BASE, {
       //call the link
@@ -72,13 +81,33 @@ var photoIDs = [];
       }
     }).then(function (infoResponse) {
       //then call this function
-      console.log(infoResponse);
-      createPhotoMarker(infoResponse); //pass the data to the next function;
+      //return infoResponse;
+      //console.log(infoResponse);
+      createPhotoBox(infoResponse); //pass the data to the next function;
     }).catch(function (error) {
       //if get function failed, call this function 
       console.log("infoResponse isn't working...");
       console.log(error); //show error code in the console
-    });
+    }); ///CALL 2 GETS PHOTO SRC IN VARIOUS SIZES AS JPGS
+
+    console.log("fetching photo sizes...");
+    axios.get(IMGurl_API_URL_BASE, {
+      //call the link
+      params: {
+        photo_id: photoID // pass thru your varibales to Flickr's parameters
+
+      }
+    }).then(function (infoImage) {
+      //then call this function
+      //return (infoImage);
+      //console.log(infoImage);
+      setTimeout(pullURLS(infoImage), 2000); //pass the data to the next function;
+      //createPhotoBox(infoImage)
+    }).catch(function (error) {
+      //if get function failed, call this function 
+      console.log("infoImage isn't working...");
+      console.log(error); //show error code in the console
+    }); //createPhotoBox(infoResponse, infoImage);//pass the data to the next function;
   }
 
   ; //5. process the data recieved from FLICKr, taking whats needed and sending where needed

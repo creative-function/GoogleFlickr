@@ -95,6 +95,7 @@ body {
 #results {
 	width: 50%;
 	padding: 2rem;
+	overflow: scroll;
 }
 
 /* Optional: Makes the sample page fill the window. */
@@ -104,15 +105,15 @@ html, body {
 	padding: 0;
 }
 
-.flickr_photo {
-	width: 200px;
-	height: 200px;
+.flickr_result {
+	display: -webkit-box;
+	display: flex;
+	flex-wrap: wrap;
 }
 
-.texty {
-	width: 100%;
-	height: 300px;
-	background-image: url("http://www.flickr.com/photos/spodzone/32855604024");
+.flickr_result .flickr_pane {
+	width: 200px;
+	height: 200px;
 }
 
 /*# sourceMappingURL=main.css.map */
