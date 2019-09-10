@@ -9,8 +9,8 @@
 /*pull data to get ids, title, lon/lat. assign ids per div.
 use ids to get photo urls
 
-for each object in returned data, loop through and pull the id, title, lat/lon
-send your id and get your photo,
+for each object in returned data, loop through and pull the id, title, lat/lon, and url. 
+send your id and get your photo. use url to match divs.
 
 get put on the page
  */
@@ -21,6 +21,7 @@ var picSearch_button = document.querySelector("[name='picSearch_button']");
 var picSearch_query = document.querySelector("[name='SearchInputField']");
 var tagsSearch_button = document.querySelector("[name='tagsSearch_button']");
 var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
+var flickr_windows;
 ;
 
 (function () {
@@ -29,28 +30,43 @@ var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
 
   var SRCH_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=47fa016833c10c7cf777062f48eb2908&tags=${tagsQuery}&text=${photoQuery}&max_upload_date=1567857600&has_geo=1&extras=geo&format=json&nojsoncallback=1';
   var INFO_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1';
-  var IMGurl_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1'; //7a. Pull content from neat objects such as title, lat, lon/ etc
+  var IMGurl_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1'; //6b. Pull content from neat objects such as id title, lat, lon/ etc
 
   function createPhotoBox(infoResponse) {
     console.log("loading photo info..."); //store object properties in values
 
-    var photoDeck = infoResponse.data.photo.title._content; //create div to hold all content
+    var photoDeck = infoResponse.data.photo.title._content;
+    var photoLat = infoResponse.data.photo.location.latitude;
+    var photoLon = infoResponse.data.photo.location.longitude;
+    var sizeID = infoResponse.data.photo.id;
+    var urlDeck = infoResponse.data.photo.urls.url;
+    var urlID;
+
+    for (var i = 0; i < urlDeck.length; i++) {
+      urlID = urlDeck[i]._content;
+    }
+
+    ; //create div to hold all content
 
     var resultPane = document.createElement('div');
-    resultPane.className = "flickr_result"; //create div to hold photo loaded 2ms later
+    resultPane.className = "flickr_result"; //create div to hold photo (loaded 2ms later)
 
     var resultImg = document.createElement('div');
-    resultImg.className = "flickr_img"; //create container for text
+    resultImg.className = "flickr_window";
+    resultImg.id = urlID; //sets class as id for matching purposes 
+    //create container for text
 
     var photoContent = document.createElement('p');
     photoContent.className = "flickr_content"; //place content in container
 
-    photoContent.innerText = photoDeck; //add containers to div
+    photoContent.innerText = photoDeck;
+    photoContent.innerText += " " + urlID; //add containers to div
 
     resultPane.appendChild(resultImg);
     resultPane.appendChild(photoContent); //add div to page
 
     resultsWindow.appendChild(resultPane);
+    getPhotoSizes(sizeID);
   }
 
   ; //7b. Pull urls containing sizes and jpgs. Selects 150x150/ 
@@ -66,17 +82,33 @@ var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
     });
     var imgSrc = img_lgSq.source; //set src=" {in variable}"
 
+    var urlSrc = img_lgSq.url; // set url in variable to match against 
+    //^^ GET VARIABLES //
+    //vv CREATE ELEMENTS //
+
     var imgWindow = document.createElement("img"); //create img element
 
     imgWindow.setAttribute("src", imgSrc); //set src as variable
 
-    imgWindow.className = "flickr_img"; //add shared classname
+    imgWindow.id = urlSrc; //add shared classname (sets url as id);
+    // console.log("src url:");
 
-    var img_box = document.querySelector(".flickr_result");
-    document.body.append(imgWindow); //add img to page 
+    console.log(urlSrc); //vv FIND DOM ELEMENT //
+
+    flickr_windows = document.querySelectorAll(".flickr_window"); //collect divs in array, loop thru each div, get the id
+
+    for (var w = 0; w < flickr_windows.length; w++) {
+      var windowDiv = flickr_windows[w].id;
+
+      if (urlSrc.includes(windowDiv)) {
+        console.log("match found");
+        console.log(windowDiv, urlSrc);
+        flickr_windows[w].appendChild(imgWindow);
+      }
+    }
   }
 
-  ; //6. call API again, now sending photoIDs to flickr
+  ; //6a. call API again, now sending photoIDs to flickr
 
   function getPhotoInfo(photoID) {
     // CALL 1: GETS USER INFO ON PHOTOS IN NEATER OBJECTS
@@ -90,23 +122,27 @@ var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
     }).then(function (infoResponse) {
       //then call this function
       console.log(infoResponse);
-      createPhotoBox(infoResponse); //pass the data to the next function;
+      createPhotoBox(infoResponse);
     }).catch(function (error) {
       //if get function failed, call this function 
       console.log("infoResponse isn't working...");
       console.log(error); //show error code in the console
-    }); ///CALL 2: GETS PHOTO SRC IN VARIOUS SIZES AS JPGS
+    });
+  } //7a.  all API again, now reqesuting imgs
 
+
+  function getPhotoSizes(sizeID) {
+    ///CALL 2: GETS PHOTO SRC IN VARIOUS SIZES AS JPGS
     console.log("fetching photo sizes...");
     axios.get(IMGurl_API_URL_BASE, {
       //call the link
       params: {
-        photo_id: photoID // pass thru your varibales to Flickr's parameters
+        photo_id: sizeID // pass thru your varibales to Flickr's parameters
 
       }
     }).then(function (infoImage) {
       //then call this function
-      //console.log(infoImage);
+      console.log(infoImage);
       pullURLS(infoImage); //setTimeout(pullURLS(infoImage),2000); //(wait 2ms) pass the data to the next function;
       //so photos load just a hair after thier div containers 
     }).catch(function (error) {
@@ -114,9 +150,8 @@ var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
       console.log("infoImage isn't working...");
       console.log(error); //show error code in the console
     });
-  }
+  } //5. process the photo ID data recieved from FLICKr
 
-  ; //5. process the photo ID data recieved from FLICKr
 
   function handleQueryResponse(response) {
     console.log("processing data..."); //target the array from the data you want to loop through
@@ -197,21 +232,27 @@ var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
     infowindow = new google.maps.InfoWindow({
       content: content
     }); //marker uses parameters and must include map: map to load the mapAPI 
-    //var marker = new google.maps.Marker({position: circus, map: map});
+
+    var marker = new google.maps.Marker({
+      position: circus,
+      map: map
+    });
 
     function showContentInWindow(newContent) {
       //variable is placed in new content window
       infowindow.setContent(newContent); //content is set above the indicated marker
 
       infowindow.open(map, marker);
-    } // marker.addListener("click", function (){
-    //   //content is passed through the function 
-    //   showContentInWindow("this is new content");
-    //   console.log("clicky");
-    // });
+    }
 
+    marker.addListener("click", function () {
+      //content is passed through the function 
+      showContentInWindow("this is new content");
+      console.log("clicky");
+    });
   }
 
+  ;
   window.initMap = initMap;
 })();
 //# sourceMappingURL=main.js.map

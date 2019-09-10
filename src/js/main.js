@@ -23,6 +23,7 @@ const picSearch_button = document.querySelector("[name='picSearch_button']");
 const picSearch_query = document.querySelector("[name='SearchInputField']");
 const tagsSearch_button = document.querySelector("[name='tagsSearch_button']");
 const tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
+let flickr_windows;
 
 ;(function(){
     //1. wrapped inside this function, define global function variables
@@ -35,50 +36,77 @@ const tagsSearch_query = document.querySelector("[name='tagsSearchInputField']")
     const IMGurl_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1';
 
 
-    //7a. Pull content from neat objects such as title, lat, lon/ etc
+    //6b. Pull content from neat objects such as id title, lat, lon/ etc
     function createPhotoBox(infoResponse){ 
      console.log("loading photo info..." )
      //store object properties in values
      let photoDeck = infoResponse.data.photo.title._content;
-      //create div to hold all content
+     let photoLat = infoResponse.data.photo.location.latitude;
+     let photoLon = infoResponse.data.photo.location.longitude;
+     let sizeID =  infoResponse.data.photo.id;
+     let urlDeck = infoResponse.data.photo.urls.url;
+     let urlID;
+     for(var i= 0; i < urlDeck.length; i++){
+      urlID = urlDeck[i]._content;
+     };
+
+
+     //create div to hold all content
       let resultPane = document.createElement('div');
       resultPane.className = "flickr_result";
-      //create div to hold photo loaded 2ms later
+      //create div to hold photo (loaded 2ms later)
       let resultImg = document.createElement('div');
-      resultImg.className = "flickr_img";
+      resultImg.className = "flickr_window";
+      resultImg.id = urlID; //sets class as id for matching purposes 
       //create container for text
       let photoContent = document.createElement('p');
       photoContent.className = "flickr_content";
       //place content in container
       photoContent.innerText = photoDeck;
+      photoContent.innerText += " " + urlID;
       //add containers to div
       resultPane.appendChild(resultImg);
       resultPane.appendChild(photoContent);
       //add div to page
       resultsWindow.appendChild(resultPane);
+
+      getPhotoSizes(sizeID);
     };
+    
     //7b. Pull urls containing sizes and jpgs. Selects 150x150/ 
     function pullURLS(infoImage){
-      
       let photoSizes = infoImage.data.sizes;
       //console.log("photoSize of: " +)
       console.log(photoSizes) //select size by label name
       let img_lgSq = photoSizes.size.find( ({ label }) => label === 'Large Square' );
       let imgSrc = img_lgSq.source; //set src=" {in variable}"
-    
+      let urlSrc = img_lgSq.url; // set url in variable to match against 
+      //^^ GET VARIABLES //
+
+      //vv CREATE ELEMENTS //
       let imgWindow = document.createElement("img"); //create img element
       imgWindow.setAttribute("src", imgSrc) //set src as variable
-      imgWindow.className = "flickr_img"; //add shared classname
-      let img_box = document.querySelector(".flickr_result");
-      document.body.append(imgWindow) //add img to page 
+      imgWindow.id = urlSrc; //add shared classname (sets url as id);
+
+      // console.log("src url:");
+       console.log(urlSrc);
+
+      //vv FIND DOM ELEMENT //
+       flickr_windows = document.querySelectorAll(".flickr_window");
+        //collect divs in array, loop thru each div, get the id
+      for (let w = 0; w < flickr_windows.length; w++) {
+        const windowDiv= flickr_windows[w].id;
+        if (urlSrc.includes(windowDiv)) {
+          console.log("match found");
+          console.log(windowDiv, urlSrc);
+          flickr_windows[w].appendChild(imgWindow);
+        }
+      }
     };
     
-    //6. call API again, now sending photoIDs to flickr
+    //6a. call API again, now sending photoIDs to flickr
     function getPhotoInfo(photoID){ 
-
       // CALL 1: GETS USER INFO ON PHOTOS IN NEATER OBJECTS
-
-
       console.log("fetching photo info...");
       axios.get(INFO_API_URL_BASE,{ //call the link
         params:{
@@ -86,30 +114,34 @@ const tagsSearch_query = document.querySelector("[name='tagsSearchInputField']")
         }
       }).then(function(infoResponse){ //then call this function
         console.log(infoResponse);
-        createPhotoBox(infoResponse); //pass the data to the next function;
+        createPhotoBox(infoResponse)
       }).catch(function (error){ //if get function failed, call this function 
        console.log("infoResponse isn't working...");
        console.log(error); //show error code in the console
       });
-
+    }
+    
+    //7a.  all API again, now reqesuting imgs
+    function getPhotoSizes(sizeID) {
       ///CALL 2: GETS PHOTO SRC IN VARIOUS SIZES AS JPGS
-      
-    //   console.log("fetching photo sizes...");
-    //   axios.get(IMGurl_API_URL_BASE,{ //call the link
-    //     params:{
-    //       photo_id: photoID // pass thru your varibales to Flickr's parameters
-    //     }
-    //   }).then(function(infoImage){ //then call this function
-    //    //console.log(infoImage);
-    //    pullURLS(infoImage)
-    //    //setTimeout(pullURLS(infoImage),2000); //(wait 2ms) pass the data to the next function;
-    //    //so photos load just a hair after thier div containers 
-    //   }).catch(function (error){ //if get function failed, call this function 
-    //    console.log("infoImage isn't working...");
-    //    console.log(error); //show error code in the console
-    //   });
-    // };
 
+      console.log("fetching photo sizes...");
+      axios.get(IMGurl_API_URL_BASE,{ //call the link
+        params:{
+          photo_id: sizeID // pass thru your varibales to Flickr's parameters
+        }
+      }).then(function(infoImage){ //then call this function
+      console.log(infoImage);
+      pullURLS(infoImage)
+      //setTimeout(pullURLS(infoImage),2000); //(wait 2ms) pass the data to the next function;
+        //so photos load just a hair after thier div containers 
+      }).catch(function (error){ //if get function failed, call this function 
+      console.log("infoImage isn't working...");
+      console.log(error); //show error code in the console
+      });
+    }
+    
+  
     //5. process the photo ID data recieved from FLICKr
     function handleQueryResponse(response){
       console.log("processing data...");
@@ -188,7 +220,7 @@ const tagsSearch_query = document.querySelector("[name='tagsSearchInputField']")
     });
     
     //marker uses parameters and must include map: map to load the mapAPI 
-    //var marker = new google.maps.Marker({position: circus, map: map});
+    var marker = new google.maps.Marker({position: circus, map: map});
 
     function showContentInWindow(newContent){
             //variable is placed in new content window
@@ -197,11 +229,11 @@ const tagsSearch_query = document.querySelector("[name='tagsSearchInputField']")
         infowindow.open(map, marker);
     }
     
-    // marker.addListener("click", function (){
-    //   //content is passed through the function 
-    //   showContentInWindow("this is new content");
-    //   console.log("clicky");
-    // });
-}
-window.initMap = initMap;
-})()
+    marker.addListener("click", function (){
+      //content is passed through the function 
+      showContentInWindow("this is new content");
+      console.log("clicky");
+    });
+};
+  window.initMap = initMap;
+})();
