@@ -6,6 +6,15 @@
 // get geo data using photoIDs photo.getLocatoin api
 // loop through data and set each as a marker with content window on google map's api 
 
+/* store the info in an object
+store the objects in an array
+when (Flickr photo search) button is clicked:
+
+create marker:
+loop through array and for each object
+create marker using its lat, lon, title
+place marker on map*/
+
 /*pull data to get ids, title, lon/lat. assign ids per div.
 use ids to get photo urls
 
@@ -21,7 +30,15 @@ var picSearch_button = document.querySelector("[name='picSearch_button']");
 var picSearch_query = document.querySelector("[name='SearchInputField']");
 var tagsSearch_button = document.querySelector("[name='tagsSearch_button']");
 var tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
-var flickr_windows;
+var flickr_windows; //appends images to page 
+
+var markerLoad = []; //array for when marker data is created
+
+var mapMarkers; // array where markers are stored 
+
+var map; // calls goole map !!important
+
+var infowindow = null;
 ;
 
 (function () {
@@ -30,24 +47,102 @@ var flickr_windows;
 
   var SRCH_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=47fa016833c10c7cf777062f48eb2908&tags=${tagsQuery}&text=${photoQuery}&max_upload_date=1567857600&has_geo=1&extras=geo&format=json&nojsoncallback=1';
   var INFO_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1';
-  var IMGurl_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1'; //6b. Pull content from neat objects such as id title, lat, lon/ etc
+  var IMGurl_API_URL_BASE = 'https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=47fa016833c10c7cf777062f48eb2908&photo_id=${photoID}&format=json&nojsoncallback=1'; ////-----------FLICKR---------------- FLICKR------------------FLICKR-----////
+  //11. clears any markers from the map
 
-  function createPhotoBox(infoResponse) {
-    console.log("loading photo info..."); //store object properties in values
-
-    var photoDeck = infoResponse.data.photo.title._content;
-    var photoLat = infoResponse.data.photo.location.latitude;
-    var photoLon = infoResponse.data.photo.location.longitude;
-    var sizeID = infoResponse.data.photo.id;
-    var urlDeck = infoResponse.data.photo.urls.url;
-    var urlID;
-
-    for (var i = 0; i < urlDeck.length; i++) {
-      urlID = urlDeck[i]._content;
+  function clearOverlays() {
+    //function to clear the markers from the arrays, deleting them from the map
+    for (var i = 0; i < mapMarkers.length; i++) {
+      mapMarkers[i].setMap(null);
     }
 
-    ; //create div to hold all content
+    mapMarkers.length = 0;
+  } // var content ="something about this marker"
+  // infowindow= new google.maps.InfoWindow({
+  //   content: content
+  // });
+  // function showContentInWindow(newContent){
+  //         //variable is placed in new content window
+  //     infowindow.setContent(newContent)
+  //         //content is set above the indicated marker
+  //     infowindow.open(map, marker);
+  // }
+  // marker.addListener("click", function (){
+  //   //content is passed through the function 
+  //   showContentInWindow("this is new content");
+  //   console.log("clicky");
+  // });
+  //10b. only responsible for setting up info inside infoWindow
 
+
+  function setupInfowindow(inputLoc, inputOwner) {
+    var content = "<div><p>" + inputLoc + "</p><p>" + inputOwner + "</p></div>";
+    return content;
+  } //10a. pass in coordinates to marker creator
+
+
+  function placeMarker(inputLat, inputLng, inputTitle, inputLoc, inputOwner) {
+    console.log("placing markers...");
+    console.log("creating marker"); //store passed thru parameters in new variables
+
+    var newLatLng = new google.maps.LatLng(inputLat, inputLng);
+    var marker = new google.maps.Marker({
+      position: newLatLng,
+      map: map
+    }); //pass through again to function that handles setting up content 
+
+    var content = setupInfowindow(inputLoc, inputOwner);
+    var marker = new google.maps.Marker({
+      position: newLatLng,
+      map: map
+    });
+    console.log("adding to array");
+    markers.push(marker); //when click on marker, show and set content on map 
+
+    marker.addListener("click", function () {
+      console.log("clicky click");
+      infowindow.setContent(content);
+      infowindow.open(map, marker);
+    });
+    var newLatLng = new google.maps.LatLng(inputLat, inputLng);
+    var marker = new google.maps.Marker({
+      position: newLatLng,
+      map: map,
+      title: inputTitle
+    });
+    mapMarkers.push(marker); //adds new marker to the markers array for google
+    //placeInfoWindow(mapMarkers);
+  } //10b. assign markers info windows
+
+
+  function placeInfoWindow(mapMarkers) {
+    console.log("mapMarkers");
+    console.log(mapMarkers); // mapMarkers.forEach(marker => {   
+    //   var content = marker.title;
+    //   infowindow= new google.maps.InfoWindow({
+    //       content: content
+    //   });
+    // });
+  } //9. create new googleMarker coordinates
+
+
+  function createMarker(markerLoad) {
+    console.log('inputingCoords...');
+    console.log(markerLoad); //loop through marker info 
+
+    for (var m = 0; m < markerLoad.length; m++) {
+      var inputLat = markerLoad[m].lat;
+      var inputLng = markerLoad[m].lng;
+      var inputTitle = markerLoad[m].title;
+      var inputLoc = markerLoad[m].location;
+      var inputOwner = markerLoad[m].owner;
+      placeMarker(inputLat, inputLng, inputTitle, inputLoc, inputOwner);
+    }
+  } //8. place photos on the page 
+
+
+  function displayPhotoResults(urlID, photoTitle, photoDesc, photoLoc, photoOwner, sizeID) {
+    //create div to hold all content
     var resultPane = document.createElement('div');
     resultPane.className = "flickr_result"; //create div to hold photo (loaded 2ms later)
 
@@ -59,22 +154,59 @@ var flickr_windows;
     var photoContent = document.createElement('p');
     photoContent.className = "flickr_content"; //place content in container
 
-    photoContent.innerText = photoDeck;
-    photoContent.innerText += " " + urlID; //add containers to div
+    photoContent.innerText = photoTitle;
+    photoContent.innerHTML += " " + photoDesc;
+    photoContent.innerHTML += " " + photoLoc;
+    photoContent.innerHTML += " " + photoOwner; //add containers to div
 
     resultPane.appendChild(resultImg);
     resultPane.appendChild(photoContent); //add div to page
 
-    resultsWindow.appendChild(resultPane);
+    resultsWindow.appendChild(resultPane); //call and add photos
+
     getPhotoSizes(sizeID);
+  } //6b. Pull content from neat objects such as id title, lat, lon/ etc
+
+
+  function pullPhotoData(infoResponse) {
+    console.log("loading photo info...");
+    console.log(infoResponse); //store object properties in values
+
+    var photoTitle = infoResponse.data.photo.title._content;
+    var photoDesc = infoResponse.data.photo.description._content;
+    var photoOwner = infoResponse.data.photo.owner.username;
+    var photoLoc = infoResponse.data.photo.owner.location;
+    var photoLat = infoResponse.data.photo.location.latitude;
+    var photoLng = infoResponse.data.photo.location.longitude;
+    var sizeID = infoResponse.data.photo.id;
+    var urlDeck = infoResponse.data.photo.urls.url;
+    var urlID;
+
+    for (var i = 0; i < urlDeck.length; i++) {
+      urlID = urlDeck[i]._content;
+    }
+
+    ; //put results on page
+
+    displayPhotoResults(urlID, photoTitle, photoDesc, photoLoc, photoOwner, sizeID); //create object for google markers
+
+    var photoMarker = {
+      lat: photoLat,
+      lng: photoLng,
+      title: photoTitle,
+      owner: photoOwner,
+      location: photoLoc //store markers in global array so googleFunctions() can access them
+
+    };
+    markerLoad.push(photoMarker);
+    createMarker(markerLoad);
   }
 
   ; //7b. Pull urls containing sizes and jpgs. Selects 150x150/ 
 
   function pullURLS(infoImage) {
     var photoSizes = infoImage.data.sizes; //console.log("photoSize of: " +)
-
-    console.log(photoSizes); //select size by label name
+    //console.log(photoSizes) //select size by label name
 
     var img_lgSq = photoSizes.size.find(function (_ref) {
       var label = _ref.label;
@@ -92,17 +224,17 @@ var flickr_windows;
 
     imgWindow.id = urlSrc; //add shared classname (sets url as id);
     // console.log("src url:");
+    // console.log(urlSrc);
+    //vv FIND DOM ELEMENT //
 
-    console.log(urlSrc); //vv FIND DOM ELEMENT //
-
-    flickr_windows = document.querySelectorAll(".flickr_window"); //collect divs in array, loop thru each div, get the id
+    flickr_windows = document.querySelectorAll(".flickr_window"); //collect divs in array, loop thru each div, match the id
 
     for (var w = 0; w < flickr_windows.length; w++) {
       var windowDiv = flickr_windows[w].id;
 
       if (urlSrc.includes(windowDiv)) {
-        console.log("match found");
-        console.log(windowDiv, urlSrc);
+        // console.log("match found");
+        //console.log(windowDiv, urlSrc);
         flickr_windows[w].appendChild(imgWindow);
       }
     }
@@ -121,8 +253,8 @@ var flickr_windows;
       }
     }).then(function (infoResponse) {
       //then call this function
-      console.log(infoResponse);
-      createPhotoBox(infoResponse);
+      //console.log(infoResponse);
+      pullPhotoData(infoResponse);
     }).catch(function (error) {
       //if get function failed, call this function 
       console.log("infoResponse isn't working...");
@@ -142,7 +274,7 @@ var flickr_windows;
       }
     }).then(function (infoImage) {
       //then call this function
-      console.log(infoImage);
+      // console.log(infoImage);
       pullURLS(infoImage); //setTimeout(pullURLS(infoImage),2000); //(wait 2ms) pass the data to the next function;
       //so photos load just a hair after thier div containers 
     }).catch(function (error) {
@@ -203,6 +335,10 @@ var flickr_windows;
     console.log('value of photo query: ', tagsQuery); //pass variables to next function
 
     getQueryData(photoQuery, tagsQuery); //function still works if one value is not entered.
+
+    resultsWindow.innerHTML = " "; // clears any results from page
+
+    clearOverlays(); //clears any markers from the map
   }
 
   ; //2. When user clickes the button, run this function (capture user values )
@@ -210,49 +346,28 @@ var flickr_windows;
   picSearch_button.addEventListener("click", makeSearchRequest); //when user clicks button,
 
   tagsSearch_button.addEventListener("click", makeSearchRequest); // run this function
+  ////-----------FLICKR---------------- FLICKR------------------FLICKR-----////
   ////-----------GOOGLE MAPS---------------- GOOGLE MAPS------------------GOOGLE MAPS-----////
-
-  var map; //var service;
-
-  var markers = [];
-  var infowindow = null;
+  // var map;
+  // //var service;
+  // var mapMarkers;
+  // var infowindow = null;
 
   function initMap() {
     console.log("init map is here");
+    mapMarkers = [];
     var circus = {
       lat: 33.813245,
       lng: -84.362171
     };
     map = new google.maps.Map(document.getElementById('map'), {
       center: circus,
-      zoom: 12
-    }); //makes places API a variable 
-
-    var content = "something about this marker";
-    infowindow = new google.maps.InfoWindow({
-      content: content
-    }); //marker uses parameters and must include map: map to load the mapAPI 
-
-    var marker = new google.maps.Marker({
-      position: circus,
-      map: map
-    });
-
-    function showContentInWindow(newContent) {
-      //variable is placed in new content window
-      infowindow.setContent(newContent); //content is set above the indicated marker
-
-      infowindow.open(map, marker);
-    }
-
-    marker.addListener("click", function () {
-      //content is passed through the function 
-      showContentInWindow("this is new content");
-      console.log("clicky");
+      zoom: 11
     });
   }
 
-  ;
+  ; ////-----------GOOGLE MAPS---------------- GOOGLE MAPS------------------GOOGLE MAPS-----////
+
   window.initMap = initMap;
 })();
 //# sourceMappingURL=main.js.map
