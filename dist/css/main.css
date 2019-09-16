@@ -73,19 +73,23 @@ table {
 }
 
 body {
-	background: #ccc;
+	background: whitesmoke;
 }
 
 /* 2. Content ================================= */
 .wrapper {
 	display: -webkit-box;
 	display: flex;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: reverse;
+	        flex-direction: row-reverse;
 }
 
 /* Always set the map height explicitly to define the size of the div
 * element that contains the map. */
 #map {
 	width: 50%;
+	height: 100%;
 }
 
 #map, .wrapper {
@@ -94,8 +98,10 @@ body {
 
 #results {
 	width: 50%;
-	padding: 2rem;
-	overflow: scroll;
+	height: 100%;
+	padding: 1rem;
+	overflow: auto;
+	background-image: url("../img/confetti-1637197_960_720.jpg");
 }
 
 /* Optional: Makes the sample page fill the window. */
@@ -105,15 +111,73 @@ html, body {
 	padding: 0;
 }
 
-.flickr_result {
-	display: -webkit-box;
-	display: flex;
-	flex-wrap: wrap;
+#search-box {
+	width: 100%;
 }
 
-.flickr_result .flickr_pane {
-	width: 200px;
-	height: 200px;
+#search-box form {
+	height: 100%;
+	width: 100%;
+	border-radius: 25px;
+	background-color: rgba(225, 166, 156, 0.85);
+}
+
+#search-box form p {
+	font-family: Arial, Helvetica, sans-serif;
+	letter-spacing: .2em;
+	padding: 2%;
+}
+
+#search-box form input {
+	margin: 2%;
+}
+
+#search-box form button {
+	border-radius: 25px;
+	padding: 1%;
+	font-size: .8em;
+	margin: 2%;
+}
+
+.resultsWindow {
+	width: 100%;
+	height: 100%;
+	margin: 0 auto;
+	display: -webkit-box;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	        flex-direction: column;
+	background-color: rgba(245, 245, 245, 0.85);
+}
+
+.resultsWindow .flickr_result {
+	width: 90%;
+	border: 1px solid;
+	box-shadow: 10px 10px #ccc;
+	margin: 5%;
+}
+
+.resultsWindow .flickr_result .flickr_window {
+	width: 100%;
+}
+
+.resultsWindow .flickr_result .flickr_window img {
+	width: 100%;
+}
+
+.resultsWindow .flickr_result .flickr_content .photo_title {
+	font-size: 1.3em;
+	color: goldenrod;
+}
+
+.resultsWindow .flickr_result .flickr_content label {
+	font-weight: bold;
+	margin: 1%;
+}
+
+.resultsWindow .flickr_result .flickr_content p {
+	margin: 2%;
 }
 
 /*# sourceMappingURL=main.css.map */

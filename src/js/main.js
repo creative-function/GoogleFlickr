@@ -34,6 +34,7 @@ const picSearch_query = document.querySelector("[name='SearchInputField']");
 const tagsSearch_button = document.querySelector("[name='tagsSearch_button']");
 const tagsSearch_query = document.querySelector("[name='tagsSearchInputField']");
 let flickr_windows; //appends images to page 
+let imgThumbnails= [];// array for collecting photo png srcs 
 let markerLoad = []; //array for when marker data is created
 var mapMarkers; // array where markers are stored 
 var map; // calls goole map !!important
@@ -51,7 +52,7 @@ var infowindow = null;
   ////-----------FLICKR---------------- FLICKR------------------FLICKR-----////
 
 
-  //11. clears any markers from the map
+  //10. clears any markers from the map
   function clearOverlays() {      
     //function to clear the markers from the arrays, deleting them from the map
     for (var i = 0; i < mapMarkers.length; i++ ) {
@@ -60,117 +61,46 @@ var infowindow = null;
     mapMarkers.length = 0;
 }
 
-
-
-
-
-      
-      // var content ="something about this marker"
-      // infowindow= new google.maps.InfoWindow({
-      //   content: content
-      // });
-      
   
-      // function showContentInWindow(newContent){
-      //         //variable is placed in new content window
-      //     infowindow.setContent(newContent)
-      //         //content is set above the indicated marker
-      //     infowindow.open(map, marker);
-      // }
-      
-      // marker.addListener("click", function (){
-      //   //content is passed through the function 
-      //   showContentInWindow("this is new content");
-      //   console.log("clicky");
-      // });
+  //9. pass in coordinates to marker creator
+  function placeMarker(inputLat, inputLng, inputTitle,inputOwner) {
+   console.log("creating marker...")
 
-
-
-
-
-  //10b. only responsible for setting up info inside infoWindow
-  function setupInfowindow(inputLoc, inputOwner){
-    var content = "<div><p>" + inputLoc + "</p><p>" + inputOwner+ "</p></div>";
-    return content;
-  }
-
-  //10a. pass in coordinates to marker creator
-  function placeMarker(inputLat, inputLng, inputTitle,inputLoc,inputOwner) {
-    console.log("placing markers...");
-   
-    console.log("creating marker")
-    //store passed thru parameters in new variables
+   //console.log(imgThumbnails);
+    var thumb = " ";
+    var i;
+    for (i = 0; i < imgThumbnails.length; i++) {
+      thumb = imgThumbnails[i];
+      console.log(thumb)
+    }
+  
+    //pass through again to function that handles setting up content 
+    
+    
+    var content = "<div> <a href=" + thumb + "></a>"    
+    +  "<p>" +  inputTitle 
+    +  "</p><p>Photo by : " + inputOwner 
+    + "</p></div>";
+    var infowindow = new google.maps.InfoWindow({
+    content: content
+    });
 
     var newLatLng = new google.maps.LatLng(inputLat, inputLng);
-    var marker = new google.maps.Marker({
-        position: newLatLng,
-        map: map,
-    })
-    //pass through again to function that handles setting up content 
-    var content= setupInfowindow(inputLoc, inputOwner);
     var marker = new google.maps.Marker({
       position: newLatLng, 
       map: map
     }); console.log("adding to array");
-    markers.push(marker);
+    mapMarkers.push(marker);
     //when click on marker, show and set content on map 
     marker.addListener("click", function(){
-      console.log("clicky click")
+      console.log("clicky click");
       infowindow.setContent(content);
       infowindow.open(map, marker);
+        
     })
    
-   
-   
-   
-   
-   
-   
-   
-   
-    var newLatLng = new google.maps.LatLng(inputLat, inputLng);
-    var marker = new google.maps.Marker({
-        position: newLatLng,
-        map: map,
-        title: inputTitle
-    })
-    mapMarkers.push(marker); //adds new marker to the markers array for google
-    //placeInfoWindow(mapMarkers);
   }
 
-  //10b. assign markers info windows
-  function placeInfoWindow (mapMarkers){ 
-    console.log("mapMarkers");
-    console.log(mapMarkers);
-    // mapMarkers.forEach(marker => {   
-    //   var content = marker.title;
-    //   infowindow= new google.maps.InfoWindow({
-    //       content: content
-    //   });
-    // });
-
-
-
-
-
-
-  }
-
-  //9. create new googleMarker coordinates
-  function createMarker(markerLoad){
-     console.log('inputingCoords...');
-     console.log(markerLoad)
-    //loop through marker info 
-    for (let m= 0; m < markerLoad.length; m++) {
-      let inputLat = markerLoad[m].lat;
-      let inputLng = markerLoad[m].lng;
-      let inputTitle = markerLoad[m].title;
-      let inputLoc = markerLoad[m].location;
-      let inputOwner = markerLoad[m].owner;
-
-      placeMarker(inputLat,inputLng,inputTitle,inputLoc,inputOwner); 
-    }
-  }
 
 
   //8. place photos on the page 
@@ -184,14 +114,38 @@ var infowindow = null;
     resultImg.className = "flickr_window";
     resultImg.id = urlID; //sets class as id for matching purposes 
     //create container for text
-    let photoContent = document.createElement('p');
+    let photoContent = document.createElement('div');
     photoContent.className = "flickr_content";
+    //create text divs
+    let contentTitle = document.createElement('p');
+      contentTitle.className = "photo_title";
+    let contentDesc = document.createElement('p');
+      contentDesc.className = "photo_desc";
+    let contentLoc = document.createElement('p');
+      contentLoc.className = "photo_location";
+    let contentOwner = document.createElement('p');
+      contentOwner.className = "photo_owner";
+    //create labels for text
+    let textLabelA = document.createElement('label');
+    let textLabelB = document.createElement('label');
+    let textLabelC = document.createElement('label');
     //place content in container
-    photoContent.innerText = photoTitle;
-    photoContent.innerHTML += " " + photoDesc;
-    photoContent.innerHTML += " " + photoLoc;
-    photoContent.innerHTML += " " + photoOwner;
-    //add containers to div
+    contentTitle.innerHTML = photoTitle;
+    textLabelA.innerHTML = "Description : "
+    contentDesc.innerHTML += " " + photoDesc;
+    textLabelB.innerHTML = "Location : "
+    contentLoc.innerHTML += " " + photoLoc;
+    textLabelC.innerHTML = "Owner : "
+    contentOwner.innerHTML += " " + photoOwner;
+    //add text to content container
+    photoContent.appendChild(contentTitle);
+    photoContent.appendChild(textLabelA);
+    photoContent.appendChild(contentDesc);
+    photoContent.appendChild(textLabelB);
+    photoContent.appendChild(contentLoc);
+    photoContent.appendChild(textLabelC);
+    photoContent.appendChild(contentOwner);
+    //add containers to main div
     resultPane.appendChild(resultImg);
     resultPane.appendChild(photoContent);
     //add div to page
@@ -215,23 +169,15 @@ var infowindow = null;
     let urlDeck = infoResponse.data.photo.urls.url;
     let urlID;
     for(var i= 0; i < urlDeck.length; i++){
-    urlID = urlDeck[i]._content;
+      urlID = urlDeck[i]._content;
     };
 
     //put results on page
     displayPhotoResults(urlID, photoTitle, photoDesc, photoLoc, photoOwner, sizeID);   
 
-    //create object for google markers
-    let photoMarker = {
-      lat:photoLat,
-      lng: photoLng,
-      title: photoTitle,
-      owner: photoOwner,
-      location: photoLoc,
-    }  
-    //store markers in global array so googleFunctions() can access them
-    markerLoad.push(photoMarker);
-    createMarker(markerLoad);
+    //pass location coordinates to google
+     placeMarker(photoLat,photoLng,photoTitle,photoOwner,urlID); 
+  
   };
   
   //7b. Pull urls containing sizes and jpgs. Selects 150x150/ 
@@ -239,16 +185,18 @@ var infowindow = null;
     let photoSizes = infoImage.data.sizes;
     //console.log("photoSize of: " +)
     //console.log(photoSizes) //select size by label name
-    let img_lgSq = photoSizes.size.find( ({ label }) => label === 'Large Square' );
+    let img_lgSq = photoSizes.size.find( ({ label }) => label === 'Medium' );
     let imgSrc = img_lgSq.source; //set src=" {in variable}"
     let urlSrc = img_lgSq.url; // set url in variable to match against 
     //^^ GET VARIABLES //
+    imgThumbnails.push(imgSrc);
+
 
     //vv CREATE ELEMENTS //
     let imgWindow = document.createElement("img"); //create img element
     imgWindow.setAttribute("src", imgSrc) //set src as variable
     imgWindow.id = urlSrc; //add shared classname (sets url as id);
-
+    imgWindow.className = "picture"
     // console.log("src url:");
     // console.log(urlSrc);
 
