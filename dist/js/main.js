@@ -62,7 +62,7 @@ var infowindow = null;
   } //9. pass in coordinates to marker creator
 
 
-  function placeMarker(inputLat, inputLng, inputTitle, inputOwner) {
+  function placeMarker(inputLat, inputLng, inputTitle, inputOwner, urlID) {
     console.log("creating marker..."); //console.log(imgThumbnails);
 
     var thumb = " ";
@@ -74,7 +74,7 @@ var infowindow = null;
     } //pass through again to function that handles setting up content 
 
 
-    var content = "<div> <a href=" + thumb + "></a>" + "<p>" + inputTitle + "</p><p>Photo by : " + inputOwner + "</p></div>";
+    var content = "<div>" + urlID + "<p>" + inputTitle + "</p><p>Photo by : " + inputOwner + "</p></div>";
     var infowindow = new google.maps.InfoWindow({
       content: content
     });
